@@ -1,0 +1,20 @@
+[project]
+name = "graph-animator"
+version = "0.1.0"
+description = "Render animated graph videos from time-series text files."
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "matplotlib>=3.10.9",
+    "numpy>=2.4.4",
+]
+
+[project.scripts]
+graph-animator = "graph_animator:main"
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = ["graph_animator"]
