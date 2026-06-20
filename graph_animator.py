@@ -15,6 +15,7 @@ matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation, FFMpegWriter, PillowWriter
+from matplotlib.colors import is_color_like
 import numpy as np
 
 
@@ -108,6 +109,14 @@ Columns may be selected by header name or by zero-based column index.
     parser.add_argument("--title", help="Plot title. Defaults to the input path")
     parser.add_argument("--xlabel", help="X-axis label")
     parser.add_argument("--ylabel", help="Y-axis label")
+    parser.add_argument(
+        "--colors",
+        nargs="+",
+        help=(
+            "Colors to cycle through for plotted curves. Accepts Matplotlib "
+            "color names, hex colors, or other Matplotlib color specs."
+        ),
+    )
     parser.add_argument("--fps", type=int, default=30, help="Video frames per second")
     parser.add_argument(
         "--duration",
@@ -225,6 +234,10 @@ Columns may be selected by header name or by zero-based column index.
             parser.error(f"--{name.replace('_', '-')} requires MIN < MAX")
     if args.logy and args.y_range is not None and args.y_range[0] <= 0:
         parser.error("--y-range MIN must be positive when --logy is used")
+    if args.colors is not None:
+        invalid_colors = [color for color in args.colors if not is_color_like(color)]
+        if invalid_colors:
+            parser.error(f"--colors contains invalid Matplotlib color value: {invalid_colors[0]}")
     if not hasattr(args, "show_value_annotation"):
         args.show_value_annotation = True
     if not hasattr(args, "show_legend"):
@@ -649,7 +662,7 @@ def render_animation(
     )
 
     fig, ax = plt.subplots(figsize=tuple(args.figsize), constrained_layout=True)
-    colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
+    colors = args.colors or plt.rcParams["axes.prop_cycle"].by_key()["color"]
     background_lines = []
     trail_lines = []
     markers = []

@@ -115,11 +115,18 @@ Set the visible x-axis and y-axis ranges:
 graph-animator /path/to/file.dat --y 2 --x-range 0 10 --y-range -1 1 -o ranged.mp4
 ```
 
+Set the colors used for plotted curves:
+
+```bash
+graph-animator /path/to/file.dat --y 2 3 --colors tab:blue "#d55e00" -o colored.mp4
+```
+
 ## Main Options
 
 - input files: pass one or more `.dat` files. Multiple files are plotted together in the same animation.
 - `--y`: one or more value columns to animate with respect to time. Defaults to the last numeric non-x column in each input file.
 - `--x`: time/x-axis column. Defaults to `Time`.
+- `--colors COLOR [COLOR ...]`: colors to cycle through for plotted curves. Accepts Matplotlib color names, hex colors, and other Matplotlib color specs.
 - `--end-time`: keep only rows whose x-axis/time value is less than or equal to this value. Defaults to no upper limit.
 - `--x-range MIN MAX`: visible x-axis range. Requires `MIN < MAX`.
 - `--y-range MIN MAX`: visible y-axis range. Requires `MIN < MAX`; `MIN` must be positive with `--logy`.
