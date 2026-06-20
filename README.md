@@ -77,6 +77,12 @@ marker and vertical time line segment keep moving every frame:
 graph-animator /path/to/file.dat --y 2 --value-update-interval 0.5 -o throttled_text.mp4
 ```
 
+Hide the foreground time/value annotation:
+
+```bash
+graph-animator /path/to/file.dat --y 2 --no-time-value-legend -o no_text.mp4
+```
+
 Render the first 100 data frames in 5 seconds, then render the remaining data
 frames in 20 seconds:
 
@@ -97,11 +103,26 @@ Highlight a point on the x-axis after the current time reaches that value:
 graph-animator /path/to/file.dat --y 2 --x-marker 4.5 -o marker.mp4
 ```
 
+Render only data up to an x-axis/time value:
+
+```bash
+graph-animator /path/to/file.dat --y 2 --end-time 10.0 -o until_10s.mp4
+```
+
+Set the visible x-axis and y-axis ranges:
+
+```bash
+graph-animator /path/to/file.dat --y 2 --x-range 0 10 --y-range -1 1 -o ranged.mp4
+```
+
 ## Main Options
 
 - input files: pass one or more `.dat` files. Multiple files are plotted together in the same animation.
 - `--y`: one or more value columns to animate with respect to time. Defaults to the last numeric non-x column in each input file.
 - `--x`: time/x-axis column. Defaults to `Time`.
+- `--end-time`: keep only rows whose x-axis/time value is less than or equal to this value. Defaults to no upper limit.
+- `--x-range MIN MAX`: visible x-axis range. Requires `MIN < MAX`.
+- `--y-range MIN MAX`: visible y-axis range. Requires `MIN < MAX`; `MIN` must be positive with `--logy`.
 - `--all-y`: plot all numeric columns except the x-axis column. Defaults to off.
 - `--where COLUMN=VALUE`: keep only matching rows. Can be repeated.
 - `--logy`: use a logarithmic y-axis. Defaults to off.
@@ -109,6 +130,7 @@ graph-animator /path/to/file.dat --y 2 --x-marker 4.5 -o marker.mp4
 - `--value-fontsize`: font size for the foreground time/value annotation. Defaults to `10`.
 - `--value-position`: corner for the foreground time/value annotation: `nw`, `ne`, `sw`, or `se`. Defaults to `nw`.
 - `--value-label`: annotation content: `time-value` or `time`. Defaults to `time-value`. Displayed numbers are rounded to two decimal places and left-aligned inside the annotation box.
+- `--no-time-value-legend`: hide the foreground time/value annotation. Defaults to off.
 - `--value-update-interval`: minimum x-axis/time interval between annotation text updates. Use `0` to update every frame.
 - `--legend-position`: fixed legend corner: `nw`, `ne`, `sw`, or `se`. Defaults to `ne`.
 - `--time-line-style`: style for the current-time vertical line segment from the x-axis to the current value: `-`, `--`, `:`, or `-.`. Defaults to `--`.

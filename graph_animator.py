@@ -86,6 +86,25 @@ Columns may be selected by header name or by zero-based column index.
         metavar="COLUMN=VALUE",
         help="Filter rows before plotting. Can be repeated, e.g. --where patch=outlet_duct.",
     )
+    parser.add_argument(
+        "--end-time",
+        type=float,
+        help="Keep only rows whose x/time value is less than or equal to this value.",
+    )
+    parser.add_argument(
+        "--x-range",
+        nargs=2,
+        type=float,
+        metavar=("MIN", "MAX"),
+        help="Visible x-axis range.",
+    )
+    parser.add_argument(
+        "--y-range",
+        nargs=2,
+        type=float,
+        metavar=("MIN", "MAX"),
+        help="Visible y-axis range.",
+    )
     parser.add_argument("--title", help="Plot title. Defaults to the input path")
     parser.add_argument("--xlabel", help="X-axis label")
     parser.add_argument("--ylabel", help="Y-axis label")
@@ -129,6 +148,13 @@ Columns may be selected by header name or by zero-based column index.
         choices=("time-value", "time"),
         default="time-value",
         help="Content shown in the foreground annotation.",
+    )
+    parser.add_argument(
+        "--no-time-value-legend",
+        action="store_false",
+        dest="show_value_annotation",
+        default=argparse.SUPPRESS,
+        help="Hide the foreground time/value annotation.",
     )
     parser.add_argument(
         "--value-update-interval",
@@ -186,6 +212,14 @@ Columns may be selected by header name or by zero-based column index.
         help="Print detected columns and exit without rendering.",
     )
     args = parser.parse_args()
+    for name in ("x_range", "y_range"):
+        values = getattr(args, name)
+        if values is not None and values[0] >= values[1]:
+            parser.error(f"--{name.replace('_', '-')} requires MIN < MAX")
+    if args.logy and args.y_range is not None and args.y_range[0] <= 0:
+        parser.error("--y-range MIN must be positive when --logy is used")
+    if not hasattr(args, "show_value_annotation"):
+        args.show_value_annotation = True
     if not hasattr(args, "show_time_line"):
         args.show_time_line = True
     return args
@@ -529,6 +563,8 @@ def load_curves(path: Path, args: argparse.Namespace, include_source: bool) -> l
 
     x = data[:, x_idx]
     finite_x = np.isfinite(x)
+    if args.end_time is not None:
+        finite_x &= x <= args.end_time
     x = x[finite_x]
     y_values = data[finite_x][:, y_indices]
 
@@ -649,19 +685,26 @@ def render_animation(
             visible=False,
             zorder=20,
         )
-    text_x, text_y, text_ha, text_va = annotation_position(args.value_position)
-    text = ax.text(
-        text_x,
-        text_y,
-        "",
-        transform=ax.transAxes,
-        va=text_va,
-        ha=text_ha,
-        multialignment="left",
-        fontsize=args.value_fontsize,
-        zorder=10,
-        bbox={"boxstyle": "round,pad=0.35", "fc": "white", "ec": "0.75", "alpha": 0.9},
-    )
+    text = None
+    if args.show_value_annotation:
+        text_x, text_y, text_ha, text_va = annotation_position(args.value_position)
+        text = ax.text(
+            text_x,
+            text_y,
+            "",
+            transform=ax.transAxes,
+            va=text_va,
+            ha=text_ha,
+            multialignment="left",
+            fontsize=args.value_fontsize,
+            zorder=10,
+            bbox={
+                "boxstyle": "round,pad=0.35",
+                "fc": "white",
+                "ec": "0.75",
+                "alpha": 0.9,
+            },
+        )
 
     title = args.title or (str(paths[0]) if len(paths) == 1 else " + ".join(path.name for path in paths))
     x_labels = unique_text([curve.x_label for curve in curves])
@@ -671,8 +714,13 @@ def render_animation(
     ax.set_title(title)
     ax.set_xlabel(args.xlabel or ", ".join(x_labels))
     ax.set_ylabel(args.ylabel or ", ".join(y_labels))
-    ax.set_xlim(float(np.nanmin(timeline)), float(np.nanmax(timeline)))
-    ax.set_ylim(*pad_limits(all_y, args.logy))
+    x_limits = tuple(args.x_range) if args.x_range is not None else (
+        float(np.nanmin(timeline)),
+        float(np.nanmax(timeline)),
+    )
+    y_limits = tuple(args.y_range) if args.y_range is not None else pad_limits(all_y, args.logy)
+    ax.set_xlim(*x_limits)
+    ax.set_ylim(*y_limits)
     if args.logy:
         ax.set_yscale("log")
     current_line_y0 = ax.get_ylim()[0]
@@ -694,7 +742,7 @@ def render_animation(
                 current_line.set_data([current_x, current_x], [current_line_y0, current_line_y1])
         if x_marker is not None:
             x_marker.set_visible(current_x >= args.x_marker)
-        should_update_label = (
+        should_update_label = args.show_value_annotation and (
             last_label_x is None
             or args.value_update_interval <= 0
             or current_x - last_label_x >= args.value_update_interval
@@ -702,7 +750,9 @@ def render_animation(
         )
         label_lines = [f"{x_labels[0]} = {current_x:.2f}"] if should_update_label else []
 
-        artists = [text]
+        artists = []
+        if text is not None:
+            artists.append(text)
         if current_line is not None:
             artists.append(current_line)
         if x_marker is not None:
@@ -727,7 +777,8 @@ def render_animation(
         if should_update_label:
             last_label_x = float(current_x)
             last_label_text = "\n".join(label_lines)
-        text.set_text(last_label_text)
+        if text is not None:
+            text.set_text(last_label_text)
         return artists
 
     animation = FuncAnimation(
