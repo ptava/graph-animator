@@ -172,6 +172,13 @@ Columns may be selected by header name or by zero-based column index.
         help="Corner position for the legend.",
     )
     parser.add_argument(
+        "--no-legend",
+        action="store_false",
+        dest="show_legend",
+        default=argparse.SUPPRESS,
+        help="Hide the curve legend.",
+    )
+    parser.add_argument(
         "--time-line-style",
         choices=("-", "--", ":", "-."),
         default="--",
@@ -220,6 +227,8 @@ Columns may be selected by header name or by zero-based column index.
         parser.error("--y-range MIN must be positive when --logy is used")
     if not hasattr(args, "show_value_annotation"):
         args.show_value_annotation = True
+    if not hasattr(args, "show_legend"):
+        args.show_legend = True
     if not hasattr(args, "show_time_line"):
         args.show_time_line = True
     return args
@@ -725,7 +734,8 @@ def render_animation(
         ax.set_yscale("log")
     current_line_y0 = ax.get_ylim()[0]
     ax.grid(True, alpha=0.25)
-    ax.legend(loc=legend_location(args.legend_position))
+    if args.show_legend:
+        ax.legend(loc=legend_location(args.legend_position))
 
     last_label_x: float | None = None
     last_label_text = ""

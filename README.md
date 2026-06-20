@@ -133,6 +133,7 @@ graph-animator /path/to/file.dat --y 2 --x-range 0 10 --y-range -1 1 -o ranged.m
 - `--no-time-value-legend`: hide the foreground time/value annotation. Defaults to off.
 - `--value-update-interval`: minimum x-axis/time interval between annotation text updates. Use `0` to update every frame.
 - `--legend-position`: fixed legend corner: `nw`, `ne`, `sw`, or `se`. Defaults to `ne`.
+- `--no-legend`: hide the curve legend. Defaults to off.
 - `--time-line-style`: style for the current-time vertical line segment from the x-axis to the current value: `-`, `--`, `:`, or `-.`. Defaults to `--`.
 - `--no-time-line`: hide the current-time vertical line segment. Defaults to off.
 - `--x-marker`: x-axis/time value to highlight with a blue inverted triangle after the current time reaches or passes it.
